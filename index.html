@@ -865,7 +865,7 @@
   </p>
 
   <div class="hero-actions">
-    <form class="waitlist-form" id="waitlist" onsubmit="handleSubmit(event)">
+    <form class="waitlist-form" id="waitlist" data-source="hero" onsubmit="handleSubmit(event)">
       <input type="email" placeholder="your@company.com" required id="email-input">
       <button type="submit">Join the waitlist</button>
     </form>
@@ -1052,7 +1052,7 @@
     <div class="cta-inner reveal">
       <h2>Stop writing reports.<br><em>Start passing audits.</em></h2>
       <p>Join the waitlist and be first to know when ShieldGen launches. Founding members get a locked-in rate forever.</p>
-      <form class="waitlist-form" style="display:inline-flex;margin:0 auto;" onsubmit="handleSubmit(event)">
+      <form class="waitlist-form" style="display:inline-flex;margin:0 auto;" data-source="cta" onsubmit="handleSubmit(event)">
         <input type="email" placeholder="your@company.com" required>
         <button type="submit">Secure your spot</button>
       </form>
@@ -1085,16 +1085,35 @@
   }, { threshold: 0.1 });
   revealEls.forEach(el => observer.observe(el));
 
-  // Waitlist form
-  function handleSubmit(e) {
+  // ↓ Replace with your Google Apps Script URL after deploying
+  const SHEET_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+
+  async function handleSubmit(e) {
     e.preventDefault();
     const btn = e.target.querySelector('button');
     const input = e.target.querySelector('input');
-    btn.textContent = '✓ You\'re on the list!';
-    btn.style.background = '#4A88C7';
-    input.value = '';
-    input.disabled = true;
+    const email = input.value.trim();
+    const source = e.target.dataset.source || 'unknown';
+    const originalText = btn.textContent;
+
+    btn.textContent = 'Submitting...';
     btn.disabled = true;
+
+    try {
+      await fetch(SHEET_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, source })
+      });
+      btn.textContent = '✓ You\'re on the list!';
+      btn.style.background = '#4A88C7';
+      input.value = '';
+      input.disabled = true;
+    } catch (err) {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
   }
 
   // Nav scroll effect
